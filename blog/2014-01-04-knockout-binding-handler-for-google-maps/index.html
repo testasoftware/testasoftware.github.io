@@ -4,19 +4,74 @@
 information they wanted to display an interactive map. Google maps makes this easy enough, but with knockout it was even easier!</p>
 <p>First the data. To position a map we're going to need latitude and longitude. Google makes this process super easy with their
 geo-coding services. We start with a model to represent our location...</p>
-<script src="https://gist.github.com/stesta/b611de1f28ff377a2dee.js"></script> 
+<div class="gatsby-highlight" data-language="csharp"><pre style="counter-reset: linenumber NaN" class="language-csharp line-numbers"><code class="language-csharp"><span class="token punctuation">[</span><span class="token attribute"><span class="token class-name">Serializable</span></span><span class="token punctuation">]</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">GeocoderLocation</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">public</span> <span class="token return-type class-name"><span class="token keyword">double</span></span> Longitude <span class="token punctuation">{</span> <span class="token keyword">get</span><span class="token punctuation">;</span> <span class="token keyword">set</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+  <span class="token keyword">public</span> <span class="token return-type class-name"><span class="token keyword">double</span></span> Latitude <span class="token punctuation">{</span> <span class="token keyword">get</span><span class="token punctuation">;</span> <span class="token keyword">set</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+  <span class="token keyword">public</span> <span class="token keyword">override</span> <span class="token return-type class-name"><span class="token keyword">string</span></span> <span class="token function">ToString</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> String<span class="token punctuation">.</span><span class="token function">Format</span><span class="token punctuation">(</span><span class="token string">"{0}, {1}"</span><span class="token punctuation">,</span> Latitude<span class="token punctuation">,</span> Longitude<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code><span aria-hidden="true" class="line-numbers-rows" style="white-space: normal; width: auto; left: 0;"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></pre></div>
 <p>Then create a simple static method to use Google's geo-coding service to populate that model based on a street address that
 we already have for the location.</p>
-<script src="https://gist.github.com/stesta/d92787de6d02e0f80b06.js"></script>
+<div class="gatsby-highlight" data-language="csharp"><pre style="counter-reset: linenumber NaN" class="language-csharp line-numbers"><code class="language-csharp"><span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">class</span> <span class="token class-name">Geocoder</span>
+<span class="token punctuation">{</span>
+  <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token return-type class-name">GeocoderLocation</span> <span class="token function">GetLatitudeLongitude</span><span class="token punctuation">(</span><span class="token class-name"><span class="token keyword">string</span></span> address<span class="token punctuation">)</span>
+  <span class="token punctuation">{</span>
+    <span class="token class-name">WebRequest</span> request <span class="token operator">=</span> WebRequest<span class="token punctuation">.</span><span class="token function">Create</span><span class="token punctuation">(</span><span class="token string">"http://maps.googleapis.com/maps/api/geocode/xml?sensor=false&amp;amp;address="</span> <span class="token operator">+</span> HttpUtility<span class="token punctuation">.</span><span class="token function">UrlEncode</span><span class="token punctuation">(</span>address<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+    <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token class-name">WebResponse</span> response <span class="token operator">=</span> request<span class="token punctuation">.</span><span class="token function">GetResponse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">using</span> <span class="token punctuation">(</span><span class="token class-name">Stream</span> stream <span class="token operator">=</span> response<span class="token punctuation">.</span><span class="token function">GetResponseStream</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+      <span class="token class-name">XDocument</span> document <span class="token operator">=</span> XDocument<span class="token punctuation">.</span><span class="token function">Load</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token constructor-invocation class-name">StreamReader</span><span class="token punctuation">(</span>stream<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token class-name">XElement</span> longitudeElement <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">Descendants</span><span class="token punctuation">(</span><span class="token string">"lng"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">FirstOrDefault</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token class-name">XElement</span> latitudeElement <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">Descendants</span><span class="token punctuation">(</span><span class="token string">"lat"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">FirstOrDefault</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>longitudeElement <span class="token operator">!=</span> <span class="token keyword">null</span> <span class="token operator">&amp;</span>amp<span class="token punctuation">;</span><span class="token operator">&amp;</span>amp<span class="token punctuation">;</span> latitudeElement <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token constructor-invocation class-name">GeocoderLocation</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+          Longitude <span class="token operator">=</span> Double<span class="token punctuation">.</span><span class="token function">Parse</span><span class="token punctuation">(</span>longitudeElement<span class="token punctuation">.</span>Value<span class="token punctuation">,</span> CultureInfo<span class="token punctuation">.</span>InvariantCulture<span class="token punctuation">)</span><span class="token punctuation">,</span>
+          Latitude <span class="token operator">=</span> Double<span class="token punctuation">.</span><span class="token function">Parse</span><span class="token punctuation">(</span>latitudeElement<span class="token punctuation">.</span>Value<span class="token punctuation">,</span> CultureInfo<span class="token punctuation">.</span>InvariantCulture<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">;</span>
+        
+      <span class="token keyword">return</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code><span aria-hidden="true" class="line-numbers-rows" style="white-space: normal; width: auto; left: 0;"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></pre></div>
 <p>What I actually ended up doing was using these two bits of code to update their database location records to include
 the returned latitude and longitude. I then updated the location c-sharp and corresponding javascript models to include
 these values when the data is returned. Having the latitude and longitude available on the frontend model made it easy to
 use the Google Maps Javascript API to create a map.</p>
 <p>What I ended up doing was creating a Knockout binding handler to create the map.</p>
-<script src="https://gist.github.com/stesta/620d064782d35c17e773.js"></script>
+<div class="gatsby-highlight" data-language="javascript"><pre style="counter-reset: linenumber NaN" class="language-javascript line-numbers"><code class="language-javascript">ko<span class="token punctuation">.</span>bindingHandlers<span class="token punctuation">.</span>googlemap <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token function-variable function">init</span><span class="token operator">:</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">element<span class="token punctuation">,</span> valueAccessor</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span>
+      value <span class="token operator">=</span> <span class="token function">valueAccessor</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+      latLng <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">google<span class="token punctuation">.</span>maps<span class="token punctuation">.</span>LatLng</span><span class="token punctuation">(</span>value<span class="token punctuation">.</span><span class="token function">latitude</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> value<span class="token punctuation">.</span><span class="token function">longitude</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+      mapOptions <span class="token operator">=</span> <span class="token punctuation">{</span>
+        zoom<span class="token operator">:</span> <span class="token number">16</span><span class="token punctuation">,</span>
+        center<span class="token operator">:</span> latLng<span class="token punctuation">,</span>
+        mapTypeId<span class="token operator">:</span> google<span class="token punctuation">.</span>maps<span class="token punctuation">.</span>MapTypeId<span class="token punctuation">.</span><span class="token constant">ROADMAP</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      map <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">google<span class="token punctuation">.</span>maps<span class="token punctuation">.</span>Map</span><span class="token punctuation">(</span>element<span class="token punctuation">,</span> mapOptions<span class="token punctuation">)</span><span class="token punctuation">,</span>
+      marker <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">google<span class="token punctuation">.</span>maps<span class="token punctuation">.</span>Marker</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        position<span class="token operator">:</span> latLng<span class="token punctuation">,</span>
+        map<span class="token operator">:</span> map
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code><span aria-hidden="true" class="line-numbers-rows" style="white-space: normal; width: auto; left: 0;"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></pre></div>
 <p>Below is a simple example of how to actually use this binding handler... <br />
 <strong>(note you need to specify a height and width for your map)</strong></p>
-<script src="https://gist.github.com/stesta/e9f4feb2a3dc113cac99.js"></script> 
+<div class="gatsby-highlight" data-language="css"><pre style="counter-reset: linenumber NaN" class="language-css line-numbers"><code class="language-css"><span class="token selector">&lt;style>
+.map</span> <span class="token punctuation">{</span> <span class="token property">height</span><span class="token punctuation">:</span>300px<span class="token punctuation">;</span> <span class="token property">width</span><span class="token punctuation">:</span>300px<span class="token punctuation">;</span> <span class="token punctuation">}</span>
+&lt;/style>
+
+&lt;div data-bind=<span class="token string">"foreach: locations"</span>>
+  &lt;div data-bind=<span class="token string">"text: name"</span>>&lt;/div>    
+  &lt;div class=<span class="token string">"map"</span> data-bind=<span class="token string">"googlemap: { latitude: latitude, longitude: longitude }"</span>>&lt;/div>
+&lt;/div></code><span aria-hidden="true" class="line-numbers-rows" style="white-space: normal; width: auto; left: 0;"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></pre></div>
 <p>Easy enough! 15 minutes of work!</p>
 <h3>Working Code</h3>
 <p>Additionally, here are a couple of working fiddles to demonstrate:</p>
